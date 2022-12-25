@@ -1,0 +1,236 @@
+#define _CRT_SECURE_NO_DEPRECATE
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <conio.h>
+#include <windows.h>
+#include <math.h>
+
+#define M_PI 3.14159265358
+#define width 65
+#define height 25
+
+
+struct raket
+{
+	int x, y;
+	int w;
+};
+typedef struct raket Raket;
+
+struct ball
+{
+	float x, y;
+	int xi, yi;
+	float ugol;
+	float speed;
+};
+typedef struct ball Ball;
+
+
+int formball(Ball* ball_l);
+char putball(Ball* ball_l, char mas[][width + 1]);
+int pokball(float x, float y, Ball* ball_l);
+int dvigball(Ball* ball_l, int* pk, char mas[][width + 1]);
+int formraket(Raket* raket_t);
+float dvigraket(int x, Raket* raket_t);
+boolean cursor(int x, int y);
+
+
+
+int main()
+{
+	char c;
+	struct raket raketr;//создаем переменную типа raket
+	struct Raket* raket_t = &raketr;//создаем указатель
+	struct ball balll;//создаем переменную типа ball
+	struct Ball* ball_l = &balll;//создаем указатель 
+	int maxcount = 0;
+	int count = 0;
+	int* pk = &count;
+	BOOL run = FALSE;
+	char mas[height][width + 1];
+	int lvl = 1;//первый уровень
+	system("chcp 1251");
+	formraket(raket_t);
+	formball(ball_l);
+	do
+	{
+		cursor(0, 0);
+
+		if (run)
+			dvigball(ball_l, pk, mas);
+
+		if (balll.yi > height)
+		{
+			run = FALSE;
+			if (count > maxcount)
+			{
+				maxcount = count;
+			}
+			count = 0;
+			lvl = 1;
+		}
+
+
+		for (int i = 0; i < width; i++)
+		{
+			mas[0][i] = '#';
+
+
+		}
+		mas[0][width] = '\0';
+
+		strncpy(mas[1], mas[0], width + 1);
+		for (int i = 1; i < width - 1; i++)
+			mas[1][i] = ' ';
+
+		for (int i = 2; i < height; i++)
+			strncpy(mas[i], mas[1], width + 1);
+
+		if (count > 15)//уровень 2 (если  count > 15 перехеодим на уровень 2)
+		{
+			for (int i = 3; i < 10; i++)
+			{
+				mas[3][i] = '#';
+				mas[14][i] = '#';
+			}
+			lvl = 2;
+		}
+		if (count > 25)//уровень 3 (если  count > 25 перехеодим на уровень 3)
+		{
+			for (int i = 10; i < 16; i++)
+			{
+				//здесь можно будет изменить вид стенок 
+				mas[i][25] = '#';//(эта стенка (mas[i][25] = '#') - вертикальная: размер задан циклом for от 10 до 16
+				mas[10][i] = '#';//(эта стенка (mas[10][i] = '#') - горизонтальная: размер также задан циклом for от 10 до 16
+				mas[5][i] = '#';
+				//также для остальных уровней
+			}
+			lvl = 3;
+		}
+		if (count > 35)//уровень 4 (если  count > 35 перехеодим на уровень 3)
+		{
+			for (int i = 35; i < 48; i++)
+				mas[7][i] = '#';
+			for (int i = 50; i < 55; i++)
+				mas[15][i] = '#';
+			lvl = 4;
+		}
+		for (int i = raketr.x; i < raketr.x + raketr.w; i++)
+		{
+			mas[raketr.y][i] = '-';
+		}
+		putball(ball_l, mas);
+		for (int i = 0; i < height; i++)
+		{
+			printf("%s", mas[i]);
+			if (i == 3)
+				printf(" !!! %i ", count);
+			if (i == 4)
+				printf(" max %i ", maxcount);
+			if (i == 5)
+				printf(" Level: %i ", lvl);
+			if (i == 6)
+				printf(" Нажмите W чтобы начать игру ");
+			if (i == 7)
+				printf(" Нажмите V чтобы закончить игру ");
+			if (i < height - 1)
+				printf("\n");
+
+
+		}
+
+		if (GetKeyState('A') < 0)
+			dvigraket(raketr.x - 1, raket_t);
+		if (GetKeyState('D') < 0)
+			dvigraket(raketr.x + 1, raket_t);
+		if (GetKeyState('W') < 0)
+			run = TRUE;
+		if (!run)
+			pokball(raketr.x + raketr.w / 2, raketr.y - 1, ball_l);
+		Sleep(10);
+
+	} while ((GetKeyState('V') >= 0));
+	return 0;
+}
+
+int formball(Ball* ball_l)
+{
+	pokball(2, 2, ball_l);
+	ball_l->ugol = -1;
+	ball_l->speed = 0.5;
+	return ball_l;
+}
+char putball(Ball* ball_l, char mas[][width + 1])
+{
+	return mas[ball_l->yi][ball_l->xi] = '*';
+}
+
+int pokball(float x, float y, Ball* ball_l)
+{
+	ball_l->x = x;
+	ball_l->y = y;
+	ball_l->xi = (int)ball_l->x;
+	ball_l->yi = (int)ball_l->y;
+	return ball_l;
+}
+int dvigball(Ball* ball_l, int* pk, char mas[][width + 1])
+{
+	if (ball_l->ugol < 0)
+		ball_l->ugol += M_PI * 2;
+	if (ball_l->ugol > M_PI * 2)
+		ball_l->ugol -= M_PI * 2;
+
+	Ball bl = *ball_l;
+	pokball(ball_l->x + cos(ball_l->ugol) * ball_l->speed, ball_l->y + sin(ball_l->ugol) * ball_l->speed, ball_l);
+
+	if ((mas[ball_l->yi][ball_l->xi] == '#') || (mas[ball_l->yi][ball_l->xi] == '-'))
+	{
+		if (mas[ball_l->yi][ball_l->xi] == '-')
+			(*pk)++;
+
+		if ((ball_l->xi != bl.xi) && (ball_l->yi != bl.yi))
+		{
+			if (mas[bl.yi][ball_l->xi] == mas[ball_l->yi][bl.xi])
+				bl.ugol = bl.ugol + M_PI;
+			else
+			{
+				if (mas[bl.yi][ball_l->xi] == '#')
+					bl.ugol = (2 * M_PI - bl.ugol) + M_PI;
+				else
+					bl.ugol = (2 * M_PI - bl.ugol);
+			}
+		}
+		else if (ball_l->yi == bl.yi)
+			bl.ugol = (2 * M_PI - bl.ugol) + M_PI;
+		else
+			bl.ugol = (2 * M_PI - bl.ugol);
+
+		*ball_l = bl;
+		dvigball(ball_l, pk, mas);
+	}
+	return ball_l;
+}
+int formraket(Raket* raket_t)
+{
+	raket_t->w = 7;
+	raket_t->x = (width - raket_t->w) / 2;
+	raket_t->y = height - 1;
+	return raket_t;
+}
+float dvigraket(int x, Raket* raket_t)
+{
+	raket_t->x = x;
+	if (raket_t->x < 1)
+		return raket_t->x = 1;
+	if (raket_t->x + raket_t->w >= width)
+		return raket_t->x = width - 1 - raket_t->w;
+}
+boolean cursor(int x, int y)
+{
+	COORD coord;
+	coord.X = x;
+	coord.Y = y;
+	return SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
